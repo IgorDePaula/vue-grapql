@@ -1,17 +1,60 @@
 <template>
   <div id="app">
     <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+<ul>
+  <li v-for="user in users.data" :key="user.id">{{user.id}} - {{user.name}}</li>
+</ul>
+<p>total de usuarios: {{users.paginatorInfo.total}}</p>
+    <button @click="aumenta">aumentar</button>
+    <button @click="diminui">diminui</button>
+    <p>{{page}}</p>
   </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
-
+import gql from 'graphql-tag'
+import users from './graphql/users.graphql'
 export default {
   name: 'app',
-  components: {
-    HelloWorld
+  data () {
+    return {
+      users: {
+        paginatorInfo: { }
+      },
+      user: '',
+      page: 1
+    }
+  },
+  methods: {
+    aumenta () {
+      this.page++
+    },
+    diminui () {
+      if (this.page > 1) {
+        this.page--
+      }
+    }
+  },
+  apollo: {
+    // Simple query that will update the 'hello' vue property
+    users: {
+      query: users,
+      variables () {
+        return {
+          page: this.page
+        }
+      }
+    },
+    user: {
+      query: gql`{
+                  user(id:2){
+                      id
+                      name
+                      email
+
+                  }
+                }`
+    }
   }
 }
 </script>

@@ -1,0 +1,11 @@
+query Users($page:Int!){
+                  users(count:2, page:$page){
+                    paginatorInfo{
+                      total
+                    }
+                    data{
+                      id,
+                      name
+                    }
+                  }
+                }
