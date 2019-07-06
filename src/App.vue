@@ -38,11 +38,19 @@
 </template>
 
 <script>
+import Echo from 'laravel-echo'
+import * as io from 'socket.io-client'
 import gql from 'graphql-tag'
 import users from './graphql/users.graphql'
 import { CREATE_USER_MUTATION, LOGIN } from './graphql/graphql'
 export default {
   name: 'app',
+  channel: 'laravel_database_MessageEvent',
+  echo: {
+    'Message': (payload) => {
+      console.log('new message from team', payload)
+    }
+  },
   data () {
     return {
       email: '',
@@ -50,10 +58,12 @@ export default {
       name: '',
       password: '',
       users: {
+        data: {},
         paginatorInfo: { }
       },
       user: '',
-      page: 1
+      page: 1,
+      id: 1
     }
   },
   methods: {
@@ -126,12 +136,11 @@ export default {
     },
     $subscribe: {
       // When a tag is added
-      postAdded: {
-        query: gql`subscription tags($title: String!, $description: String!) {
-        postAdded(type: $type) {
+      articleUpdated: {
+        query: gql`subscription articleUpdated($id: ID) {
+        articleUpdated(id: $id) {
           id
-          label
-          type
+          title
         }
       }`,
         // Reactive variables
@@ -140,13 +149,13 @@ export default {
           // and will re-subscribe with the right variables
           // each time the values change
           return {
-            type: this.type,
+            id: this.id
           }
         },
         // Result hook
         // Don't forget to destructure `data`
         result ({ data }) {
-          console.log(data.tagAdded)
+          console.log(data.articleUpdated)
         }
       }
     },
@@ -160,6 +169,17 @@ export default {
                   }
                 }`
     }
+  },
+  mounted () {
+    /* const config = {
+      broadcaster: 'socket.io',
+      host: 'localhost:6001',
+      port: '6001',
+      client: io
+    }
+
+    const echo = new Echo(config)
+    echo.channel('laravel_database_MessageEvent').listen('App\\Providers\\Message', console.log) */
   }
 }
 </script>
