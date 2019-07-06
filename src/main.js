@@ -20,9 +20,21 @@ const apolloClient = new ApolloClient({
 const config = {
   broadcaster: 'socket.io',
   host: 'localhost:6001',
-  port: '6001',
   client: io
 }
+
+const socket = io.connect('http://localhost:6001/')
+socket.on('connection', socket => {
+  socket.join('private-lighthouse-TP7kILZVtYG9KT10i1gGh18O4orrwiaK-1562433647').on('articleUpdated', console.log)
+})
+
+socket.on('App\\Providers\\Message', data => {
+  console.log(data)
+})
+
+socket.on('Message', data => {
+  console.log(data)
+})
 
 const echo = new Echo(config)
 // laravel_database_laravel_cache:graphql.subscriber.private-lighthouse graphql.topic.ARTICLE_UPDATED
@@ -35,6 +47,9 @@ echo.channel('laravel_database_MessageEvent').listen('App\\Providers\\Message', 
 echo.channel('laravel_database_MessageEvent').listen('Message', function (payload) {
   console.log('payload 3', payload)
 })
+echo.channel('MessageEvent').listen('Message', function (payload) {
+  console.log('payload 4', payload)
+})
 
 Vue.use(VueEcho, config)
 class PusherLink extends ApolloLink {
@@ -45,6 +60,8 @@ class PusherLink extends ApolloLink {
   }
 
   request (operation, forward) {
+    throw Error('erro no request do websocket do apollo')
+    // eslint-disable-next-line no-unreachable
     console.log('operation on request', operation)
     console.log('foward on request', forward)
     return new Observable(observer => {
@@ -56,7 +73,7 @@ class PusherLink extends ApolloLink {
             data,
             operation
           )
-
+          console.log('subcription channel', subscriptionChannel)
           if (subscriptionChannel) {
             this._createSubscription(subscriptionChannel, observer)
           } else {
@@ -70,6 +87,7 @@ class PusherLink extends ApolloLink {
   }
 
   _getChannel (data, operation) {
+    console.log('get channel', operation.operationName)
     return !!data.extensions &&
     !!data.extensions.lighthouse_subscriptions &&
     !!data.extensions.lighthouse_subscriptions.channels
@@ -81,9 +99,11 @@ class PusherLink extends ApolloLink {
   }
 
   _createSubscription (subscriptionChannel, observer) {
+    console.log('create subscription', subscriptionChannel)
     const pusherChannel = this.io.join(subscriptionChannel)
     // Subscribe for more update
-    pusherChannel.on('lighthouse-subscription', payload => {
+    // laravel_database_MessageEvent
+    pusherChannel.on(subscriptionChannel, payload => {
       if (!payload.more) {
         // This is the end, the server says to unsubscribe
         this.io.leave(subscriptionChannel)

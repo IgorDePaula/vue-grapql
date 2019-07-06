@@ -38,19 +38,12 @@
 </template>
 
 <script>
-import Echo from 'laravel-echo'
-import * as io from 'socket.io-client'
+
 import gql from 'graphql-tag'
 import users from './graphql/users.graphql'
 import { CREATE_USER_MUTATION, LOGIN } from './graphql/graphql'
 export default {
   name: 'app',
-  channel: 'laravel_database_MessageEvent',
-  echo: {
-    'Message': (payload) => {
-      console.log('new message from team', payload)
-    }
-  },
   data () {
     return {
       email: '',
@@ -134,7 +127,7 @@ export default {
         }
       }
     },
-    $subscribe: {
+    /* $subscribe: {
       // When a tag is added
       articleUpdated: {
         query: gql`subscription articleUpdated($id: ID) {
@@ -149,16 +142,17 @@ export default {
           // and will re-subscribe with the right variables
           // each time the values change
           return {
-            id: this.id
+            id: 118
           }
         },
         // Result hook
         // Don't forget to destructure `data`
         result ({ data }) {
           console.log(data.articleUpdated)
+          console.log(data)
         }
       }
-    },
+    }, */
     user: {
       query: gql`{
                   user(id:2){
@@ -180,6 +174,28 @@ export default {
 
     const echo = new Echo(config)
     echo.channel('laravel_database_MessageEvent').listen('App\\Providers\\Message', console.log) */
+    const subQuery = gql`subscription articleUpdated($id: ID) {
+        articleUpdated(id: $id) {
+          id
+          title
+        }
+      }`
+
+    const observer = this.$apollo.subscribe({
+      query: subQuery,
+      variables: {
+        type: 142
+      }
+    })
+
+    observer.subscribe({
+      next (data) {
+        console.log('observer', data)
+      },
+      error (error) {
+        console.error('observer error', error)
+      }
+    })
   }
 }
 </script>
